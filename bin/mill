@@ -1,0 +1,47 @@
+#!/usr/bin/env sh
+
+# See https://gitee.com/darcyshen/mill-on-gitee
+
+DEFAULT_MILL_VERSION=0.9.9
+MILL_DOWNLOAD_URL="https://gitee.com/darcyshen/mill-on-gitee/attach_files/778982/download/0.9.9-assembly"
+
+set -e
+
+if [ -z "$MILL_VERSION" ] ; then
+  if [ -f ".mill-version" ] ; then
+    MILL_VERSION="$(head -n 1 .mill-version 2> /dev/null)"
+  elif [ -f "mill" ] && [ "$BASH_SOURCE" != "mill" ] ; then
+    MILL_VERSION=$(grep -F "DEFAULT_MILL_VERSION=" "mill" | head -n 1 | cut -d= -f2)
+  else
+    MILL_VERSION=$DEFAULT_MILL_VERSION
+  fi
+fi
+
+if [ "x${XDG_CACHE_HOME}" != "x" ] ; then
+  MILL_DOWNLOAD_PATH="${XDG_CACHE_HOME}/mill/download"
+else
+  MILL_DOWNLOAD_PATH="${HOME}/.cache/mill/download"
+fi
+MILL_EXEC_PATH="${MILL_DOWNLOAD_PATH}/${MILL_VERSION}"
+
+version_remainder="$MILL_VERSION"
+MILL_MAJOR_VERSION="${version_remainder%%.*}"; version_remainder="${version_remainder#*.}"
+MILL_MINOR_VERSION="${version_remainder%%.*}"; version_remainder="${version_remainder#*.}"
+
+if [ ! -x "$MILL_EXEC_PATH" ] ; then
+  mkdir -p $MILL_DOWNLOAD_PATH
+  if [ "$MILL_MAJOR_VERSION" -gt 0 ] || [ "$MILL_MINOR_VERSION" -ge 5 ] ; then
+    ASSEMBLY="-assembly"
+  fi
+  DOWNLOAD_FILE=$MILL_EXEC_PATH-tmp-download
+  curl --fail -L -o "$DOWNLOAD_FILE" "$MILL_DOWNLOAD_URL"
+  chmod +x "$DOWNLOAD_FILE"
+  mv "$DOWNLOAD_FILE" "$MILL_EXEC_PATH"
+  unset DOWNLOAD_FILE
+  unset MILL_DOWNLOAD_URL
+fi
+
+unset MILL_DOWNLOAD_PATH
+unset MILL_VERSION
+
+exec $MILL_EXEC_PATH "$@"
