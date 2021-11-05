@@ -22,7 +22,8 @@ import org.scalatest.FunSuite
 
 class VideoDataSourceTest extends FunSuite {
   val localVideo = "video/test/resources/big_buck_bunny_short.mp4"
-  val spark = SparkSession.builder()
+  val spark = SparkSession
+    .builder()
     .master("local[*]")
     .appName("test")
     .getOrCreate()

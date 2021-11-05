@@ -1,9 +1,10 @@
 import mill._
 import mill.scalalib._
 import mill.scalalib.publish._
+import mill.scalalib.scalafmt._
 import $ivy.`org.bytedeco:javacpp:1.5.6`
 
-object video extends ScalaModule with PublishModule {
+object video extends ScalaModule with PublishModule with ScalafmtModule {
   override def scalaVersion = "2.12.13"
 
   override def publishVersion = "0.0.1-SNAPSHOT"

@@ -28,22 +28,22 @@ import org.apache.spark.sql.util.CaseInsensitiveStringMap
 import org.apache.spark.util.SerializableConfiguration
 
 case class VideoScan(
-                      sparkSession: SparkSession,
-                      fileIndex: PartitioningAwareFileIndex,
-                      dataSchema: StructType,
-                      readDataSchema: StructType,
-                      readPartitionSchema: StructType,
-                      options: CaseInsensitiveStringMap,
-                      partitionFilters: Seq[Expression] = Seq.empty,
-                      dataFilters: Seq[Expression] = Seq.empty
-                    ) extends FileScan {
+    sparkSession: SparkSession,
+    fileIndex: PartitioningAwareFileIndex,
+    dataSchema: StructType,
+    readDataSchema: StructType,
+    readPartitionSchema: StructType,
+    options: CaseInsensitiveStringMap,
+    partitionFilters: Seq[Expression] = Seq.empty,
+    dataFilters: Seq[Expression] = Seq.empty
+) extends FileScan {
 
   override def isSplitable(path: Path): Boolean = true
 
   override def withFilters(
-                            partitionFilters: Seq[Expression],
-                            dataFilters: Seq[Expression]
-                          ): FileScan =
+      partitionFilters: Seq[Expression],
+      dataFilters: Seq[Expression]
+  ): FileScan =
     this.copy(partitionFilters = partitionFilters, dataFilters = dataFilters)
 
   override def createReaderFactory(): PartitionReaderFactory = {

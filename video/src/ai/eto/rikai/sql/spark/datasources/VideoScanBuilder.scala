@@ -24,12 +24,12 @@ import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.util.CaseInsensitiveStringMap
 
 case class VideoScanBuilder(
-                             sparkSession: SparkSession,
-                             fileIndex: PartitioningAwareFileIndex,
-                             schema: StructType,
-                             dataSchema: StructType,
-                             options: CaseInsensitiveStringMap
-                           ) extends FileScanBuilder(sparkSession, fileIndex, dataSchema) {
+    sparkSession: SparkSession,
+    fileIndex: PartitioningAwareFileIndex,
+    schema: StructType,
+    dataSchema: StructType,
+    options: CaseInsensitiveStringMap
+) extends FileScanBuilder(sparkSession, fileIndex, dataSchema) {
   override def build(): Scan = VideoScan(
     sparkSession,
     fileIndex,

@@ -27,16 +27,16 @@ import org.apache.spark.sql.types._
 import org.apache.spark.sql.util.CaseInsensitiveStringMap
 
 case class VideoTable(
-                       name: String,
-                       sparkSession: SparkSession,
-                       options: CaseInsensitiveStringMap,
-                       paths: Seq[String],
-                       userSpecifiedSchema: Option[StructType]
-                     ) extends FileTable(sparkSession, options, paths, userSpecifiedSchema) {
+    name: String,
+    sparkSession: SparkSession,
+    options: CaseInsensitiveStringMap,
+    paths: Seq[String],
+    userSpecifiedSchema: Option[StructType]
+) extends FileTable(sparkSession, options, paths, userSpecifiedSchema) {
 
   override def newScanBuilder(
-                               options: CaseInsensitiveStringMap
-                             ): VideoScanBuilder =
+      options: CaseInsensitiveStringMap
+  ): VideoScanBuilder =
     VideoScanBuilder(sparkSession, fileIndex, schema, dataSchema, options)
 
   override def newWriteBuilder(info: LogicalWriteInfo): WriteBuilder = ???

@@ -33,17 +33,17 @@ import java.net.URI
 import javax.imageio.ImageIO
 
 case class VideoPartitionReaderFactory(
-                                        sqlConf: SQLConf,
-                                        broadcastedConf: Broadcast[SerializableConfiguration],
-                                        dataSchema: StructType,
-                                        readDataSchema: StructType,
-                                        partitionSchema: StructType,
-                                        filters: Seq[Filter]
-                                      ) extends FilePartitionReaderFactory {
+    sqlConf: SQLConf,
+    broadcastedConf: Broadcast[SerializableConfiguration],
+    dataSchema: StructType,
+    readDataSchema: StructType,
+    partitionSchema: StructType,
+    filters: Seq[Filter]
+) extends FilePartitionReaderFactory {
 
   override def buildReader(
-                            file: PartitionedFile
-                          ): PartitionReader[InternalRow] = {
+      file: PartitionedFile
+  ): PartitionReader[InternalRow] = {
     val uri = new URI(file.filePath)
     val grabber = new FFmpegFrameGrabber(uri.getPath)
     val converter = new Java2DFrameConverter

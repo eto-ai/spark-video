@@ -35,9 +35,9 @@ class VideoDataSourceV2 extends FileDataSourceV2 {
   }
 
   override def getTable(
-                         options: CaseInsensitiveStringMap,
-                         schema: StructType
-                       ): Table = {
+      options: CaseInsensitiveStringMap,
+      schema: StructType
+  ): Table = {
     val paths = getPaths(options)
     val tableName = getTableName(options, paths)
     val optionsWithoutPaths = getOptionsWithoutPaths(options)
