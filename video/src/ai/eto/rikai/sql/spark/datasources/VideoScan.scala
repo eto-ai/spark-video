@@ -16,6 +16,8 @@
 
 package ai.eto.rikai.sql.spark.datasources
 
+import scala.collection.JavaConverters._
+
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.expressions.Expression
@@ -37,6 +39,7 @@ case class VideoScan(
     partitionFilters: Seq[Expression] = Seq.empty,
     dataFilters: Seq[Expression] = Seq.empty
 ) extends FileScan {
+  private val videoOptions = new VideoOptions(options.asScala.toMap)
 
   override def isSplitable(path: Path): Boolean = true
 
@@ -59,6 +62,7 @@ case class VideoScan(
       dataSchema,
       readDataSchema,
       readPartitionSchema,
+      videoOptions,
       Array.empty[Filter]
     )
   }

@@ -16,6 +16,8 @@
 
 package ai.eto.rikai.sql.spark.datasources
 
+import org.apache.commons.codec.digest.DigestUtils
+import org.apache.commons.io.FilenameUtils
 import org.apache.commons.io.output.ByteArrayOutputStream
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.sql.catalyst.InternalRow
@@ -26,6 +28,7 @@ import org.apache.spark.sql.execution.datasources.v2.FilePartitionReaderFactory
 import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.sources.Filter
 import org.apache.spark.sql.types.StructType
+import org.apache.spark.unsafe.types.UTF8String
 import org.apache.spark.util.SerializableConfiguration
 import org.bytedeco.javacv.{FFmpegFrameGrabber, Frame, Java2DFrameConverter}
 
@@ -38,6 +41,7 @@ case class VideoPartitionReaderFactory(
     dataSchema: StructType,
     readDataSchema: StructType,
     partitionSchema: StructType,
+    options: VideoOptions,
     filters: Seq[Filter]
 ) extends FilePartitionReaderFactory {
 
@@ -45,7 +49,22 @@ case class VideoPartitionReaderFactory(
       file: PartitionedFile
   ): PartitionReader[InternalRow] = {
     val uri = new URI(file.filePath)
-    val grabber = new FFmpegFrameGrabber(uri.getPath)
+    val extension = FilenameUtils.getExtension(file.filePath)
+    println(file)
+    val tmpPath = uri.getScheme match {
+      case "s3" =>
+        val region = SQLConf.get.getConfString("spark.hadoop.aws.region")
+        val tmpFileName = String.valueOf(
+          DigestUtils.getMd5Digest.digest(file.toString().getBytes())
+        )
+        val s3Utils = new S3Utils(region)
+        val fullName = s"/tmp/${tmpFileName}.${extension}"
+        s3Utils.getObject(uri, fullName)
+        fullName
+      case _ =>
+        file.filePath
+    }
+    val grabber = new FFmpegFrameGrabber(tmpPath)
     val converter = new Java2DFrameConverter
     grabber.start()
     grabber.setFrameNumber(file.start.toInt)
@@ -60,12 +79,13 @@ case class VideoPartitionReaderFactory(
       }
 
       override def get(): InternalRow = {
-        val row = new GenericInternalRow(2)
-        row.setLong(0, frame_id)
+        val row = new GenericInternalRow(3)
+        row.update(0, UTF8String.fromString(uri.toString))
+        row.setLong(1, frame_id)
         val javaImage = converter.convert(frame)
         val bos = new ByteArrayOutputStream()
         ImageIO.write(javaImage, "png", bos)
-        row.update(1, bos.toByteArray)
+        row.update(2, bos.toByteArray)
         row
       }
 

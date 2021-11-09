@@ -36,6 +36,7 @@ class VideoDataSourceTest extends FunSuite {
     assert(
       schema === StructType(
         Seq(
+          StructField("video_uri", StringType),
           StructField("frame_id", LongType),
           StructField("image_data", BinaryType)
         )
@@ -47,6 +48,7 @@ class VideoDataSourceTest extends FunSuite {
     val df = spark.read
       .format("video")
       .load(localVideo)
+    df.show(1)
     assert(df.count() === 300)
   }
 }

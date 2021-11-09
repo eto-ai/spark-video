@@ -47,6 +47,7 @@ case class VideoTable(
   override def inferSchema(files: Seq[FileStatus]): Option[StructType] = Some {
     StructType(
       Seq(
+        StructField("video_uri", StringType, nullable = false),
         StructField("frame_id", LongType, nullable = false),
         StructField("image_data", BinaryType, nullable = false)
       )
