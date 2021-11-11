@@ -1,5 +1,7 @@
 # spark-video
-## Cheatsheet
+## For User
+## For Developer
+### Cheatsheet
 ```
 bin/mill video.test
 bin/mill video.publishLocal
