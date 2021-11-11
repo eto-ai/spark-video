@@ -7,4 +7,7 @@ class VideoOptions(@transient val parameters: CaseInsensitiveMap[String])
   def this(parameters: Map[String, String]) = {
     this(CaseInsensitiveMap(parameters))
   }
+
+  val fps =
+    parameters.get("fps").map(_.toInt).getOrElse(1)
 }

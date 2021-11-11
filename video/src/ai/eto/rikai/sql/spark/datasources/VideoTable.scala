@@ -49,6 +49,7 @@ case class VideoTable(
       Seq(
         StructField("video_uri", StringType, nullable = false),
         StructField("frame_id", LongType, nullable = false),
+        StructField("ts", TimestampType, nullable = false),
         StructField("image_data", BinaryType, nullable = false)
       )
     )
