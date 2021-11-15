@@ -10,7 +10,7 @@ import $ivy.`org.bytedeco:javacpp:1.5.6`
 object video extends ScalaModule with PublishModule with ScalafmtModule {
   override def scalaVersion = "2.12.13"
 
-  override def publishVersion = "0.0.1"
+  override def publishVersion = "0.0.2-SNAPSHOT"
 
   override def artifactId = "spark-video"
 
@@ -28,7 +28,7 @@ object video extends ScalaModule with PublishModule with ScalafmtModule {
   def javacppVersion = "1.5.6"
 
   override def compileIvyDeps = Agg(
-    ivy"org.apache.spark::spark-sql:3.1.2",
+    ivy"org.apache.spark::spark-sql:3.2.0",
     ivy"com.amazonaws:aws-java-sdk-s3:1.11.173"
   )
 

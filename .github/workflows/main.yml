@@ -1,9 +1,25 @@
-- uses: jodersky/setup-mill@master
-  with:
-    mill-version: 0.9.9
-- name: Compile
-  run: mill video.compile
-- name: scalafmt
-  run: mill mill.scalalib.scalafmt.ScalafmtModule/checkFormatAll __.sources
-- name: Test
-  run: mill video.test
+name: Test
+
+on:
+  # trigger test when pushed to master or pull_request
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  test:
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v2
+    - uses: jodersky/setup-mill@master
+      with:
+        mill-version: 0.9.9
+    - name: Compile
+      run: mill video.compile
+    - name: scalafmt
+      run: mill mill.scalalib.scalafmt.ScalafmtModule/checkFormatAll __.sources
+    - name: Test
+      run: mill video.test
