@@ -28,7 +28,7 @@ object video extends ScalaModule with PublishModule with ScalafmtModule {
   def javacppVersion = "1.5.6"
 
   override def compileIvyDeps = Agg(
-    ivy"org.apache.spark::spark-sql:3.1.2",
+    ivy"org.apache.spark::spark-sql:3.2.0",
     ivy"com.amazonaws:aws-java-sdk-s3:1.11.173"
   )
 
