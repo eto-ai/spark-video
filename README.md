@@ -1,10 +1,7 @@
 # spark-video
 ## For User
 ### Local Development
-```
-pyspark bin/local_install.py
-```
-or copy and paste the python code from `bin/local_install.py` to the pyspark REPL.
+Just copy and paste the python code from `bin/local_install.py` to the pyspark REPL.
 
 ### Production: Databricks Runtime
 Put these two lines in the init script:
