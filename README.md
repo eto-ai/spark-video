@@ -1,15 +1,14 @@
 # spark-video
 ## For User
-### Databricks Runtime
-Put these two lines in the init script:
+### Local Development
+Just copy and paste the python code from [bin/local_install.py](bin/local_install.py) to the pyspark REPL.
+
+### Production: Databricks Runtime
+Put these three lines in the init script:
 ```
 sudo wget -O /databricks/jars/ffmpeg-4.4-1.5.6-linux-x86_64.jar https://repo1.maven.org/maven2/org/bytedeco/ffmpeg/4.4-1.5.6/ffmpeg-4.4-1.5.6-linux-x86_64.jar
 sudo wget -O /databricks/jars/javacpp-1.5.6-linux-x86_64.jar https://repo1.maven.org/maven2/org/bytedeco/javacpp/1.5.6/javacpp-1.5.6-linux-x86_64.jar
-```
-
-Upload the assembly jar to the Databricks Cluster Libraries:
-```
-bin/mill video.assembly # Here is the jar: out/video/assembly/dest/out.jar
+sudo wget -O /databricks/jars/spark-video-assembly-0.0.1.jar https://github.com/eto-ai/spark-video/releases/download/v0.0.1/spark-video-assembly-0.0.1.jar
 ```
 
 ## For Developer
