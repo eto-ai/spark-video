@@ -67,7 +67,6 @@ case class VideoPartitionReaderFactory(
       case "bilinear"      => swscale.SWS_BILINEAR
       case "bicubic"       => swscale.SWS_BICUBIC
       case "experimental"  => swscale.SWS_X
-      // case "neighbor" => swscale
       case "area"     => swscale.SWS_AREA
       case "bicublin" => swscale.SWS_BICUBLIN
       case "gauss"    => swscale.SWS_GAUSS
