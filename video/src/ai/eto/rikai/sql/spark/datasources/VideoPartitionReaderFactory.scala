@@ -16,6 +16,9 @@
 
 package ai.eto.rikai.sql.spark.datasources
 
+import java.net.URI
+import javax.imageio.ImageIO
+
 import org.apache.commons.codec.digest.DigestUtils
 import org.apache.commons.io.FilenameUtils
 import org.apache.commons.io.output.ByteArrayOutputStream
@@ -36,9 +39,7 @@ import org.bytedeco.javacv.{
   FrameGrabber,
   Java2DFrameConverter
 }
-
-import java.net.URI
-import javax.imageio.ImageIO
+import org.bytedeco.ffmpeg.global.swscale
 
 case class VideoPartitionReaderFactory(
     sqlConf: SQLConf,
@@ -60,6 +61,26 @@ case class VideoPartitionReaderFactory(
     if (numFps == 0) 1 else numFps
   }
 
+  private def getImageScalingFlags(scalerFlag: String): Int = {
+    scalerFlag match {
+      case "fast_bilinear" => swscale.SWS_FAST_BILINEAR
+      case "bilinear"      => swscale.SWS_BILINEAR
+      case "bicubic"       => swscale.SWS_BICUBIC
+      case "experimental"  => swscale.SWS_X
+      // case "neighbor" => swscale
+      case "area"     => swscale.SWS_AREA
+      case "bicublin" => swscale.SWS_BICUBLIN
+      case "gauss"    => swscale.SWS_GAUSS
+      case "sinc"     => swscale.SWS_SINC
+      case "lanczos"  => swscale.SWS_LANCZOS
+      case "spline"   => swscale.SWS_SPLINE
+      case unknown =>
+        throw new IllegalArgumentException(
+          s"Unsupported scaler flag: ${unknown}"
+        )
+    }
+  }
+
   override def buildReader(
       file: PartitionedFile
   ): PartitionReader[InternalRow] = {
@@ -78,7 +99,12 @@ case class VideoPartitionReaderFactory(
       case _ =>
         file.filePath
     }
+
     val grabber = new FFmpegFrameGrabber(tmpPath)
+    grabber.setImageWidth(options.imageWidth)
+    grabber.setImageHeight(options.imageHeight)
+    grabber.setImageScalingFlags(getImageScalingFlags(options.scalerFlag))
+
     val converter = new Java2DFrameConverter
     grabber.start()
     val numOfFps = getNumberOfFps(grabber)
