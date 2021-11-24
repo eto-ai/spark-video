@@ -67,12 +67,12 @@ case class VideoPartitionReaderFactory(
       case "bilinear"      => swscale.SWS_BILINEAR
       case "bicubic"       => swscale.SWS_BICUBIC
       case "experimental"  => swscale.SWS_X
-      case "area"     => swscale.SWS_AREA
-      case "bicublin" => swscale.SWS_BICUBLIN
-      case "gauss"    => swscale.SWS_GAUSS
-      case "sinc"     => swscale.SWS_SINC
-      case "lanczos"  => swscale.SWS_LANCZOS
-      case "spline"   => swscale.SWS_SPLINE
+      case "area"          => swscale.SWS_AREA
+      case "bicublin"      => swscale.SWS_BICUBLIN
+      case "gauss"         => swscale.SWS_GAUSS
+      case "sinc"          => swscale.SWS_SINC
+      case "lanczos"       => swscale.SWS_LANCZOS
+      case "spline"        => swscale.SWS_SPLINE
       case unknown =>
         throw new IllegalArgumentException(
           s"Unsupported scaler flag: ${unknown}"
