@@ -28,7 +28,7 @@ object video extends ScalaModule with PublishModule with ScalafmtModule {
   def javacppVersion = "1.5.6"
 
   override def compileIvyDeps = Agg(
-    ivy"org.apache.spark::spark-sql:3.2.0",
+    ivy"org.apache.spark::spark-mllib:3.2.0",
     ivy"com.amazonaws:aws-java-sdk-s3:1.11.173"
   )
 
@@ -44,7 +44,7 @@ object video extends ScalaModule with PublishModule with ScalafmtModule {
 
     override def ivyDeps = Agg(
       ivy"org.bytedeco:ffmpeg:4.4-${javacppVersion};classifier=${javacppPlatform}",
-      ivy"org.apache.spark::spark-sql:3.1.2",
+      ivy"org.apache.spark::spark-mllib:3.1.2",
       ivy"com.amazonaws:aws-java-sdk-s3:1.11.173",
       ivy"org.scalatest::scalatest:3.0.8",
       ivy"ch.qos.logback:logback-classic:1.2.3"
