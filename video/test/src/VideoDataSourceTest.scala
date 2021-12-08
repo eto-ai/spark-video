@@ -24,7 +24,6 @@ import org.slf4j.LoggerFactory
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types._
 
-
 class VideoDataSourceTest extends FunSuite {
   val root = LoggerFactory.getLogger("root").asInstanceOf[Logger]
   root.setLevel(Level.INFO)
