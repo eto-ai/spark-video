@@ -16,11 +16,19 @@
 
 package ai.eto.rikai.sql.spark.datasources
 
+import ch.qos.logback.classic.Level
+import ch.qos.logback.classic.Logger
+import org.scalatest.FunSuite
+import org.slf4j.LoggerFactory
+
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types._
-import org.scalatest.FunSuite
+
 
 class VideoDataSourceTest extends FunSuite {
+  val root = LoggerFactory.getLogger("root").asInstanceOf[Logger]
+  root.setLevel(Level.INFO)
+
   val localVideo = "video/test/resources/big_buck_bunny_short.mp4"
   val spark = SparkSession
     .builder()
