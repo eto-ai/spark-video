@@ -42,14 +42,14 @@ case class ToMLImage(child: Expression)
   override def nullSafeEval(input: Any): Any = {
     ImageSchema.decode("", input.asInstanceOf[Array[Byte]]) match {
       case Some(row) =>
-        val encoder = RowEncoder(ImageSchema.imageSchema)
+        val encoder = RowEncoder(ImageSchema.columnSchema)
         encoder.createSerializer().apply(row.getStruct(0)).copy()
       case None =>
         null
     }
   }
 
-  override def dataType: DataType = ImageSchema.imageSchema
+  override def dataType: DataType = ImageSchema.columnSchema
 
   override def prettyName: String = "ml_image"
 

@@ -69,7 +69,19 @@ class VideoDataSourceTest extends FunSuite {
     assert(df.count() === 50)
     val showImage =
       spark.sql("select ml_image(image_data) as show_image from frames limit 3")
-    assert(showImage.schema("show_image").dataType === ImageSchema.imageSchema)
-    assert(showImage.count() == 3)
+    assert(showImage.schema("show_image").dataType === ImageSchema.columnSchema)
+    spark
+      .sql("""
+        |from (
+        |  from frames
+        |  select ml_image(image_data) as result
+        |)
+        |select
+        |  result.origin,
+        |  result.height,
+        |  result.width
+        |limit 3
+        |""".stripMargin)
+      .show()
   }
 }
