@@ -36,8 +36,9 @@ case class VideoTable(
 
   override def newScanBuilder(
       options: CaseInsensitiveStringMap
-  ): VideoScanBuilder =
+  ): VideoScanBuilder = {
     VideoScanBuilder(sparkSession, fileIndex, schema, dataSchema, options)
+  }
 
   override def newWriteBuilder(info: LogicalWriteInfo): WriteBuilder = ???
 

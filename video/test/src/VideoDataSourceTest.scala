@@ -17,23 +17,27 @@
 package ai.eto.rikai.sql.spark.datasources
 
 import scala.util.Properties
-
 import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger
+import com.typesafe.scalalogging.LazyLogging
 import org.scalatest.FunSuite
 import org.slf4j.LoggerFactory
 import org.apache.spark.ml.image.ImageSchema
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types._
 
-class VideoDataSourceTest extends FunSuite {
+class VideoDataSourceTest extends FunSuite with LazyLogging {
   private val level = Level.valueOf {
-    Properties.envOrElse("LOG_LEVEL", Level.INFO.levelStr)
+    Properties.envOrElse("LOG_LEVEL", Level.ERROR.levelStr)
   }
   LoggerFactory
     .getLogger("root")
     .asInstanceOf[Logger]
     .setLevel(level)
+  LoggerFactory
+    .getLogger("ai.eto.rikai")
+    .asInstanceOf[Logger]
+    .setLevel(Level.DEBUG)
 
   private val localVideo = "video/test/resources/big_buck_bunny_short.mp4"
   private val spark = SparkSession
@@ -63,12 +67,22 @@ class VideoDataSourceTest extends FunSuite {
     )
   }
 
-  test("count of video data") {
+  test("option: fps") {
     val df = spark.read
       .format("video")
-      .option("fps", 5)
       .load(localVideo)
-    assert(df.count() === 50)
+      .where("date_format(ts, 'mm:ss') = '00:01'")
+    assert(df.count() === 1)
+
+    (1 to 6).foreach { fps =>
+      val df = spark.read
+        .format("video")
+        .option("fps", fps)
+        .load(localVideo)
+        .where("date_format(ts, 'mm:ss') = '00:00'")
+      df.select("frame_id").show()
+      assert(df.count() === fps)
+    }
   }
 
   test("udf: ml_image") {
