@@ -26,12 +26,12 @@ import org.apache.spark.ml.image.ImageSchema
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types._
 
-
 class VideoDataSourceTest extends FunSuite {
   private val level = Level.valueOf {
     Properties.envOrElse("LOG_LEVEL", Level.INFO.levelStr)
   }
-  LoggerFactory.getLogger("root")
+  LoggerFactory
+    .getLogger("root")
     .asInstanceOf[Logger]
     .setLevel(level)
 
