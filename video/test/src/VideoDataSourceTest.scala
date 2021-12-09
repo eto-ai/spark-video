@@ -21,7 +21,9 @@ import ch.qos.logback.classic.Logger
 import org.scalatest.FunSuite
 import org.slf4j.LoggerFactory
 
+import org.apache.spark.ml.image.ImageSchema
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.catalyst.expressions.GenericInternalRow
 import org.apache.spark.sql.types._
 
 class VideoDataSourceTest extends FunSuite {
@@ -33,6 +35,10 @@ class VideoDataSourceTest extends FunSuite {
     .builder()
     .master("local[*]")
     .appName("test")
+    .config(
+      "spark.sql.extensions",
+      "ai.eto.rikai.sql.spark.SparkVideoExtensions"
+    )
     .getOrCreate()
 
   test("schema of video data source") {
@@ -58,5 +64,31 @@ class VideoDataSourceTest extends FunSuite {
       .option("fps", 5)
       .load(localVideo)
     assert(df.count() === 50)
+  }
+
+  test("udf: ml_image") {
+    val df = spark.read
+      .format("video")
+      .option("fps", 5)
+      .load(localVideo)
+    df.createOrReplaceTempView("frames")
+    spark.sqlContext.cacheTable("frames")
+    assert(df.count() === 50)
+    val showImage =
+      spark.sql("select ml_image(image_data) as show_image from frames limit 3")
+    assert(showImage.schema("show_image").dataType === ImageSchema.columnSchema)
+    spark
+      .sql("""
+        |from (
+        |  from frames
+        |  select ml_image(image_data) as result
+        |)
+        |select
+        |  result.origin,
+        |  result.height,
+        |  result.width
+        |limit 3
+        |""".stripMargin)
+      .show()
   }
 }
