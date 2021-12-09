@@ -16,15 +16,27 @@
 
 package ai.eto.rikai.sql.spark.datasources
 
+import scala.util.Properties
+
+import ch.qos.logback.classic.Level
+import ch.qos.logback.classic.Logger
+import org.scalatest.FunSuite
+import org.slf4j.LoggerFactory
 import org.apache.spark.ml.image.ImageSchema
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.catalyst.expressions.GenericInternalRow
 import org.apache.spark.sql.types._
-import org.scalatest.FunSuite
 
 class VideoDataSourceTest extends FunSuite {
-  val localVideo = "video/test/resources/big_buck_bunny_short.mp4"
-  val spark = SparkSession
+  private val level = Level.valueOf {
+    Properties.envOrElse("LOG_LEVEL", Level.INFO.levelStr)
+  }
+  LoggerFactory
+    .getLogger("root")
+    .asInstanceOf[Logger]
+    .setLevel(level)
+
+  private val localVideo = "video/test/resources/big_buck_bunny_short.mp4"
+  private val spark = SparkSession
     .builder()
     .master("local[*]")
     .appName("test")
