@@ -27,6 +27,14 @@ class VideoDataSourceTest extends SparkSessionSuite {
     )
   }
 
+  test("select * from video.`path-to-video`") {
+    val df = spark.sql(s"""
+         |select * from video.`${localVideo}`
+         |""".stripMargin)
+    df.show(3)
+    assert(df.count() === 10)
+  }
+
   test("option: fps") {
     val df = rabbitFrames.where("date_format(ts, 'mm:ss') = '00:01'")
     assert(df.count() === 1)

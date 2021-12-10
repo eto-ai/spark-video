@@ -50,5 +50,6 @@ class VideoDataSourceV2 extends FileDataSourceV2 {
     )
   }
 
-  override def fallbackFileFormat: Class[_ <: FileFormat] = ???
+  override def fallbackFileFormat: Class[_ <: FileFormat] =
+    classOf[VideoFileFormat]
 }
