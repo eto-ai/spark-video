@@ -56,14 +56,7 @@ class VideoDataSourceTest extends FunSuite with LazyLogging {
       .load(localVideo)
       .schema
     assert(
-      schema === StructType(
-        Seq(
-          StructField("video_uri", StringType),
-          StructField("frame_id", LongType),
-          StructField("ts", TimestampType),
-          StructField("image_data", BinaryType)
-        )
-      )
+      schema === VideoSchema.columnSchema
     )
   }
 

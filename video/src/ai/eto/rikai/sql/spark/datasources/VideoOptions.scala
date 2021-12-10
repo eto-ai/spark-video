@@ -16,9 +16,8 @@ class VideoOptions(@transient val parameters: CaseInsensitiveMap[String])
   val frameStepSize = parameters.get("frameStepSize").map(_.toInt).getOrElse(0)
   val frameStartId = parameters.get("frameStartId").map(_.toInt).getOrElse(0)
 
-  /**
-   * Setting width and height when loading the videos into frames
-   */
+  /** Setting width and height when loading the videos into frames
+    */
   val imageWidth = parameters.get("imageWidth").map(_.toInt).getOrElse(0)
   val imageHeight = parameters.get("imageHeight").map(_.toInt).getOrElse(0)
 
