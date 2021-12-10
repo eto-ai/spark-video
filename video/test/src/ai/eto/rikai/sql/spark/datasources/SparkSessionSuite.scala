@@ -31,4 +31,7 @@ class SparkSessionSuite extends FunSuite with LazyLogging {
       "ai.eto.rikai.sql.spark.SparkVideoExtensions"
     )
     .getOrCreate()
+  protected val rabbitFrames = spark.read
+    .format("video")
+    .load(localVideo)
 }

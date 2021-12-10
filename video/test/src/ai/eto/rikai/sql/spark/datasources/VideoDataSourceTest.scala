@@ -16,24 +16,19 @@
 
 package ai.eto.rikai.sql.spark.datasources
 
+import org.apache.spark.sql.{DataFrame, Row}
+
 class VideoDataSourceTest extends SparkSessionSuite {
 
   ignore("schema of video data source") {
-    val schema = spark.read
-      .format("video")
-      .load(localVideo)
-      .schema
     // TODO: figure out why nullable turned from false to true
     assert(
-      schema === VideoSchema.columnSchema
+      rabbitFrames.schema === VideoSchema.columnSchema
     )
   }
 
   test("option: fps") {
-    val df = spark.read
-      .format("video")
-      .load(localVideo)
-      .where("date_format(ts, 'mm:ss') = '00:01'")
+    val df = rabbitFrames.where("date_format(ts, 'mm:ss') = '00:01'")
     assert(df.count() === 1)
 
     (1 to 6).foreach { fps =>
@@ -45,5 +40,34 @@ class VideoDataSourceTest extends SparkSessionSuite {
       df.select("frame_id").show()
       assert(df.count() === fps)
     }
+  }
+
+  test("option: imageWidth, imageHeight") {
+    def firstRow(df: DataFrame): Row = {
+      import spark.implicits._
+      df.selectExpr("ml_image(image_data) as image")
+        .withColumn("width", $"image.width")
+        .withColumn("height", $"image.height")
+        .head()
+    }
+    val originalRow = firstRow(rabbitFrames)
+    assert(originalRow.getAs[Int]("width") == 640)
+    assert(originalRow.getAs[Int]("height") == 360)
+
+    val widthScaledRow = firstRow {
+      spark.read
+        .format("video")
+        .option("imageWidth", 320)
+        .load(localVideo)
+    }
+    assert(widthScaledRow.getAs[Int]("height") === 360)
+
+    val heightScaledRow = firstRow {
+      spark.read
+        .format("video")
+        .option("imageHeight", 180)
+        .load(localVideo)
+    }
+    assert(heightScaledRow.getAs[Int]("width") === 640)
   }
 }
