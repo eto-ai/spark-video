@@ -36,8 +36,9 @@ case class VideoTable(
 
   override def newScanBuilder(
       options: CaseInsensitiveStringMap
-  ): VideoScanBuilder =
+  ): VideoScanBuilder = {
     VideoScanBuilder(sparkSession, fileIndex, schema, dataSchema, options)
+  }
 
   override def newWriteBuilder(info: LogicalWriteInfo): WriteBuilder = ???
 
@@ -45,14 +46,7 @@ case class VideoTable(
     util.EnumSet.of(TableCapability.BATCH_READ)
 
   override def inferSchema(files: Seq[FileStatus]): Option[StructType] = Some {
-    StructType(
-      Seq(
-        StructField("video_uri", StringType, nullable = false),
-        StructField("frame_id", LongType, nullable = false),
-        StructField("ts", TimestampType, nullable = false),
-        StructField("image_data", BinaryType, nullable = false)
-      )
-    )
+    VideoSchema.columnSchema
   }
 
   override def formatName: String = "Video"

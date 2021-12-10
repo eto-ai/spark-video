@@ -18,7 +18,6 @@ package ai.eto.rikai.sql.spark.datasources
 
 import java.net.URI
 import javax.imageio.ImageIO
-
 import org.apache.commons.codec.digest.DigestUtils
 import org.apache.commons.io.FilenameUtils
 import org.apache.commons.io.output.ByteArrayOutputStream
@@ -27,19 +26,16 @@ import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions.GenericInternalRow
 import org.apache.spark.sql.connector.read.PartitionReader
 import org.apache.spark.sql.execution.datasources.PartitionedFile
-import org.apache.spark.sql.execution.datasources.v2.FilePartitionReaderFactory
+import org.apache.spark.sql.execution.datasources.v2.{
+  FilePartitionReaderFactory,
+  PartitionReaderWithPartitionValues
+}
 import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.sources.Filter
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.unsafe.types.UTF8String
 import org.apache.spark.util.SerializableConfiguration
-import org.bytedeco.javacv.{
-  FFmpegFrameGrabber,
-  Frame,
-  FrameGrabber,
-  Java2DFrameConverter
-}
-import org.bytedeco.ffmpeg.global.swscale
+import org.bytedeco.javacv.{FFmpegFrameGrabber, Frame, Java2DFrameConverter}
 
 case class VideoPartitionReaderFactory(
     sqlConf: SQLConf,
@@ -51,41 +47,10 @@ case class VideoPartitionReaderFactory(
     filters: Seq[Filter]
 ) extends FilePartitionReaderFactory {
 
-  private def getNumberOfFps(grabber: FrameGrabber): Int = {
-    val fps = Math.floor {
-      grabber.getLengthInFrames / Math.floor(
-        grabber.getLengthInTime / 1000000.0
-      )
-    }
-    val numFps = Math.floor(fps / options.fps).toInt
-    if (numFps == 0) 1 else numFps
-  }
-
-  private def getImageScalingFlags(scalerFlag: String): Int = {
-    scalerFlag match {
-      case "fast_bilinear" => swscale.SWS_FAST_BILINEAR
-      case "bilinear"      => swscale.SWS_BILINEAR
-      case "bicubic"       => swscale.SWS_BICUBIC
-      case "experimental"  => swscale.SWS_X
-      case "area"          => swscale.SWS_AREA
-      case "bicublin"      => swscale.SWS_BICUBLIN
-      case "gauss"         => swscale.SWS_GAUSS
-      case "sinc"          => swscale.SWS_SINC
-      case "lanczos"       => swscale.SWS_LANCZOS
-      case "spline"        => swscale.SWS_SPLINE
-      case unknown =>
-        throw new IllegalArgumentException(
-          s"Unsupported scaler flag: ${unknown}"
-        )
-    }
-  }
-
-  override def buildReader(
-      file: PartitionedFile
-  ): PartitionReader[InternalRow] = {
+  private def resolveFilePath(file: PartitionedFile): String = {
     val uri = new URI(file.filePath)
     val extension = FilenameUtils.getExtension(file.filePath)
-    val tmpPath = uri.getScheme match {
+    uri.getScheme match {
       case "s3" =>
         val region = SQLConf.get.getConfString("spark.hadoop.aws.region")
         val tmpFileName = String.valueOf(
@@ -98,40 +63,64 @@ case class VideoPartitionReaderFactory(
       case _ =>
         file.filePath
     }
+  }
 
-    val grabber = new FFmpegFrameGrabber(tmpPath)
+  private def buildGrabber(
+      options: VideoOptions,
+      file: PartitionedFile
+  ): FFmpegFrameGrabber = {
+    val path = resolveFilePath(file)
+    val grabber = new FFmpegFrameGrabber(path)
     grabber.setImageWidth(options.imageWidth)
     grabber.setImageHeight(options.imageHeight)
-    grabber.setImageScalingFlags(getImageScalingFlags(options.scalerFlag))
+    grabber.setImageScalingFlags(options.getImageScalingFlags())
+    grabber.start()
+    grabber.setFrameNumber(file.start.toInt)
+    grabber
+  }
+
+  override def buildReader(
+      file: PartitionedFile
+  ): PartitionReader[InternalRow] = {
+    val uri = new URI(file.filePath)
+    val grabber = buildGrabber(options, file)
+    val (frameStep, offset) = options.getFrameStep(grabber)
+
+    var frame: Frame = null
+    var frameId = file.start - frameStep + offset
 
     val converter = new Java2DFrameConverter
-    grabber.start()
-    val numOfFps = getNumberOfFps(grabber)
-    grabber.setFrameNumber(file.start.toInt)
-    var frame: Frame = null
-    var frame_id = file.start
 
-    new PartitionReader[InternalRow] {
+    val videoReader = new PartitionReader[InternalRow] {
       override def next(): Boolean = {
-        val targetFrameId = frame_id + numOfFps
-        while (frame_id < targetFrameId - 1) {
-          frame_id = frame_id + 1
+        val targetFrameId = frameId + frameStep
+        while (frameId < targetFrameId - 1) {
+          frameId = frameId + 1
           grabber.grabImage()
         }
-        frame_id = targetFrameId
+        frameId = targetFrameId
         frame = grabber.grabImage()
-        frame != null && (frame_id < file.start + file.length)
+        frame != null && (frameId < file.start + file.length)
       }
 
       override def get(): InternalRow = {
-        val row = new GenericInternalRow(4)
-        row.update(0, UTF8String.fromString(uri.toString))
-        row.setLong(1, frame_id)
-        row.update(2, frame.timestamp)
-        val javaImage = converter.convert(frame)
-        val bos = new ByteArrayOutputStream()
-        ImageIO.write(javaImage, "png", bos)
-        row.update(3, bos.toByteArray)
+        val size = readDataSchema.size
+        val row = new GenericInternalRow(size)
+        (0 until size).foreach { index =>
+          readDataSchema(index).name match {
+            case VideoSchema.VIDEO_URI =>
+              row.update(index, UTF8String.fromString(uri.toString))
+            case VideoSchema.FRAME_ID =>
+              row.setLong(index, frameId)
+            case VideoSchema.TS =>
+              row.update(index, frame.timestamp)
+            case VideoSchema.IMAGE_DATA =>
+              val javaImage = converter.convert(frame)
+              val bos = new ByteArrayOutputStream()
+              ImageIO.write(javaImage, "png", bos)
+              row.update(index, bos.toByteArray)
+          }
+        }
         row
       }
 
@@ -140,5 +129,11 @@ case class VideoPartitionReaderFactory(
         converter.close()
       }
     }
+    new PartitionReaderWithPartitionValues(
+      videoReader,
+      readDataSchema,
+      partitionSchema,
+      file.partitionValues
+    )
   }
 }
