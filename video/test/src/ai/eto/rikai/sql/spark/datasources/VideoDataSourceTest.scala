@@ -16,15 +16,15 @@
 
 package ai.eto.rikai.sql.spark.datasources
 
-import scala.util.Properties
-import ch.qos.logback.classic.Level
-import ch.qos.logback.classic.Logger
+import ch.qos.logback.classic.{Level, Logger}
 import com.typesafe.scalalogging.LazyLogging
-import org.scalatest.FunSuite
-import org.slf4j.LoggerFactory
 import org.apache.spark.ml.image.ImageSchema
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types._
+import org.scalatest.FunSuite
+import org.slf4j.LoggerFactory
+
+import scala.util.Properties
 
 class VideoDataSourceTest extends FunSuite with LazyLogging {
   private val level = Level.valueOf {
