@@ -8,12 +8,16 @@ import $ivy.`org.bytedeco:javacpp:1.5.6`
 
 import scala.util.Properties
 
-object video extends ScalaModule with PublishModule with ScalafmtModule {
-  override def scalaVersion = "2.12.13"
+class VideoModule(majorVersion: String) extends CrossScalaModule with PublishModule with ScalafmtModule {
+  override def crossScalaVersion: String = majorVersion match {
+    case "2.12" => "2.12.13"
+    case "2.13" => "2.13.7"
+    case _ => ???
+  }
 
   override def publishVersion = "0.0.3-SNAPSHOT"
 
-  override def artifactId = "spark-video"
+  override def artifactId = s"spark-video_${majorVersion}"
 
   override def pomSettings = PomSettings(
     description = "My first library",
@@ -55,3 +59,5 @@ object video extends ScalaModule with PublishModule with ScalafmtModule {
     override def forkEnv = Map("LOG_LEVEL" -> "ERROR")
   }
 }
+
+object video extends mill.Cross[VideoModule]("2.12", "2.13")
