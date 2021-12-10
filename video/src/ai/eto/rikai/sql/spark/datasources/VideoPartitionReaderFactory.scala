@@ -108,13 +108,13 @@ case class VideoPartitionReaderFactory(
         val row = new GenericInternalRow(size)
         (0 until size).foreach { index =>
           readDataSchema(index).name match {
-            case "video_uri" =>
+            case VideoSchema.VIDEO_URI =>
               row.update(index, UTF8String.fromString(uri.toString))
-            case "frame_id" =>
+            case VideoSchema.FRAME_ID =>
               row.setLong(index, frameId)
-            case "ts" =>
+            case VideoSchema.TS =>
               row.update(index, frame.timestamp)
-            case "image_data" =>
+            case VideoSchema.IMAGE_DATA =>
               val javaImage = converter.convert(frame)
               val bos = new ByteArrayOutputStream()
               ImageIO.write(javaImage, "png", bos)
