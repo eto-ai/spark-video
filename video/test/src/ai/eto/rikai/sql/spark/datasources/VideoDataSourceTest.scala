@@ -42,6 +42,35 @@ class VideoDataSourceTest extends SparkSessionSuite {
     }
   }
 
+  test("option: frameStepSize, frameStepOffset") {
+    def firstThreeFrameIds(df: DataFrame): Seq[Long] = {
+      import spark.implicits._
+
+      df.select("frame_id")
+        .orderBy($"frame_id".asc)
+        .limit(3)
+        .collect()
+        .map(row => row.getAs[Long]("frame_id"))
+    }
+    assert {
+      firstThreeFrameIds {
+        spark.read
+          .format("video")
+          .option("frameStepSize", 10)
+          .load(localVideo)
+      } === Seq(10L, 20L, 30L)
+    }
+    assert {
+      firstThreeFrameIds {
+        spark.read
+          .format("video")
+          .option("frameStepSize", 10)
+          .option("frameStepOffset", 1)
+          .load(localVideo)
+      } === Seq(1L, 11L, 21L)
+    }
+  }
+
   test("option: imageWidth, imageHeight") {
     def firstRow(df: DataFrame): Row = {
       import spark.implicits._

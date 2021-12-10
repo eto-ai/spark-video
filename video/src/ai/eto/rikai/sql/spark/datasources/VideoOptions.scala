@@ -12,9 +12,19 @@ class VideoOptions(@transient val parameters: CaseInsensitiveMap[String])
 
   // Number of frames per second
   val fps = parameters.get("fps").map(_.toInt).getOrElse(1)
-  // Frame step size and the frame_id to start
+
+  /** stepSize and stepOffset are used to determine how frames are selected
+    * assuming the frame_ids are 1 2 3 4 5 6 7 8 9 10
+    * with 3 as stepSize, 0 as stepOffset, here are the selected frames:
+    * 3 6 9
+    * with 3 as stepSize, 1 as stepOffset, here are the selected frames:
+    * 1 4 7 10
+    * with 3 as stepSize, 2 as stepOffset, here are the selected frames:
+    * 2 5 8
+    */
   val frameStepSize = parameters.get("frameStepSize").map(_.toInt).getOrElse(0)
-  val frameStartId = parameters.get("frameStartId").map(_.toInt).getOrElse(0)
+  val frameStepOffset =
+    parameters.get("frameStepOffset").map(_.toInt).getOrElse(0)
 
   /** Setting width and height when loading the videos into frames
     * Default to 0, means that keep the original width or height
@@ -29,7 +39,7 @@ class VideoOptions(@transient val parameters: CaseInsensitiveMap[String])
 
   def getFrameStep(grabber: FrameGrabber): (Int, Int) = {
     if (frameStepSize > 0) {
-      val startId = if (frameStartId == 0) frameStepSize else frameStartId
+      val startId = if (frameStepOffset == 0) frameStepSize else frameStepOffset
       (frameStepSize, startId)
     } else {
       val realFps = Math.floor {

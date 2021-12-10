@@ -30,7 +30,8 @@ class MLImageTest extends SparkSessionSuite {
     val showImage =
       spark.sql("select ml_image(image_data) as image from frames limit 3")
     assert(showImage.schema("image").dataType === ImageSchema.columnSchema)
-    showImage.selectExpr("image.origin", "image.height", "image.width")
+    showImage
+      .selectExpr("image.origin", "image.height", "image.width")
       .show()
   }
 }
