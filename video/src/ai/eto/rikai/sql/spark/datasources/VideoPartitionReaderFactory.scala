@@ -18,11 +18,11 @@ package ai.eto.rikai.sql.spark.datasources
 
 import java.net.URI
 import javax.imageio.ImageIO
+
 import org.apache.commons.codec.digest.DigestUtils
 import org.apache.commons.io.FilenameUtils
 import org.apache.commons.io.output.ByteArrayOutputStream
 import org.apache.spark.broadcast.Broadcast
-import org.apache.spark.sql.Row
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions.GenericInternalRow
 import org.apache.spark.sql.connector.read.PartitionReader
