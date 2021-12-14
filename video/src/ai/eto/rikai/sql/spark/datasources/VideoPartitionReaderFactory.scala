@@ -35,7 +35,12 @@ import org.apache.spark.sql.sources.Filter
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.unsafe.types.UTF8String
 import org.apache.spark.util.SerializableConfiguration
-import org.bytedeco.javacv.{FFmpegFrameGrabber, Frame, Java2DFrameConverter}
+import org.bytedeco.javacv.{
+  FFmpegFrameGrabber,
+  Frame,
+  FrameGrabber,
+  Java2DFrameConverter
+}
 
 case class VideoPartitionReaderFactory(
     sqlConf: SQLConf,
@@ -79,9 +84,74 @@ case class VideoPartitionReaderFactory(
     grabber
   }
 
+  private def buildRow(
+      converter: Java2DFrameConverter,
+      readDataSchema: StructType,
+      uri: URI,
+      frameId: Long,
+      frame: Frame
+  ): InternalRow = {
+    val size = readDataSchema.size
+    val row = new GenericInternalRow(size)
+    (0 until size).foreach { index =>
+      readDataSchema(index).name match {
+        case VideoSchema.VIDEO_URI =>
+          row.update(index, UTF8String.fromString(uri.toString))
+        case VideoSchema.FRAME_ID =>
+          row.setLong(index, frameId)
+        case VideoSchema.TS =>
+          row.update(index, frame.timestamp)
+        case VideoSchema.IMAGE_DATA =>
+          val javaImage = converter.convert(frame)
+          val bos = new ByteArrayOutputStream()
+          ImageIO.write(javaImage, "png", bos)
+          row.update(index, bos.toByteArray)
+      }
+    }
+    row
+  }
+
+  private def nextFrame(grabber: FFmpegFrameGrabber, frameStep: Long): Frame = {
+    (1L until frameStep).foreach { i =>
+      grabber.grabImage()
+    }
+    grabber.grabImage()
+  }
+
+  def buildIterator(file: PartitionedFile): Iterator[InternalRow] = {
+    val converter = new Java2DFrameConverter
+    val uri = new URI(file.filePath)
+    val grabber = buildGrabber(options, file)
+    val (frameStep, offset) = options.getFrameStep(grabber)
+    var frame: Frame = null
+    var frameId = file.start - frameStep + offset
+
+    // Grab the first frame
+    frameId = frameId + frameStep
+    frame = nextFrame(grabber, frameStep)
+
+    new Iterator[InternalRow] {
+      override def hasNext: Boolean = {
+        frame != null && (frameId < file.start + file.length)
+      }
+
+      override def next(): InternalRow = {
+        val currentRow =
+          buildRow(converter, readDataSchema, uri, frameId, frame)
+
+        // Grab the next frame
+        frameId = frameId + frameStep
+        frame = nextFrame(grabber, frameStep)
+
+        currentRow
+      }
+    }
+  }
+
   override def buildReader(
       file: PartitionedFile
   ): PartitionReader[InternalRow] = {
+    val converter = new Java2DFrameConverter
     val uri = new URI(file.filePath)
     val grabber = buildGrabber(options, file)
     val (frameStep, offset) = options.getFrameStep(grabber)
@@ -89,39 +159,15 @@ case class VideoPartitionReaderFactory(
     var frame: Frame = null
     var frameId = file.start - frameStep + offset
 
-    val converter = new Java2DFrameConverter
-
     val videoReader = new PartitionReader[InternalRow] {
       override def next(): Boolean = {
-        val targetFrameId = frameId + frameStep
-        while (frameId < targetFrameId - 1) {
-          frameId = frameId + 1
-          grabber.grabImage()
-        }
-        frameId = targetFrameId
-        frame = grabber.grabImage()
+        frameId = frameId + frameStep
+        frame = nextFrame(grabber, frameStep)
         frame != null && (frameId < file.start + file.length)
       }
 
       override def get(): InternalRow = {
-        val size = readDataSchema.size
-        val row = new GenericInternalRow(size)
-        (0 until size).foreach { index =>
-          readDataSchema(index).name match {
-            case VideoSchema.VIDEO_URI =>
-              row.update(index, UTF8String.fromString(uri.toString))
-            case VideoSchema.FRAME_ID =>
-              row.setLong(index, frameId)
-            case VideoSchema.TS =>
-              row.update(index, frame.timestamp)
-            case VideoSchema.IMAGE_DATA =>
-              val javaImage = converter.convert(frame)
-              val bos = new ByteArrayOutputStream()
-              ImageIO.write(javaImage, "png", bos)
-              row.update(index, bos.toByteArray)
-          }
-        }
-        row
+        buildRow(converter, readDataSchema, uri, frameId, frame)
       }
 
       override def close(): Unit = {

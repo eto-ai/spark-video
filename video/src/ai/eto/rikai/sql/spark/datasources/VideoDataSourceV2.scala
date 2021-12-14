@@ -50,5 +50,10 @@ class VideoDataSourceV2 extends FileDataSourceV2 {
     )
   }
 
-  override def fallbackFileFormat: Class[_ <: FileFormat] = ???
+  /** By default, DataSourceV2API is used. For the following syntax
+    *     select * from video.`/path/to/video.mp4`
+    * VideoFileFormat is used to load the video data source
+    */
+  override def fallbackFileFormat: Class[_ <: FileFormat] =
+    classOf[VideoFileFormat]
 }
