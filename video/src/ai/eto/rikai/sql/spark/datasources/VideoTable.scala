@@ -17,6 +17,7 @@
 package ai.eto.rikai.sql.spark.datasources
 
 import java.util
+
 import org.apache.hadoop.fs.FileStatus
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.connector.catalog.TableCapability
@@ -51,5 +52,6 @@ case class VideoTable(
 
   override def formatName: String = "Video"
 
-  override def fallbackFileFormat: Class[_ <: FileFormat] = ???
+  override def fallbackFileFormat: Class[_ <: FileFormat] =
+    classOf[VideoFileFormat]
 }
