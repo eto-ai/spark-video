@@ -32,7 +32,7 @@ class VideoDataSourceTest extends SparkSessionSuite {
          |select * from video.`${localVideo}`
          |""".stripMargin)
     df.show(3)
-    assert(df.count() === 10)
+    assert(df.count() === 300)
   }
 
   test("option: fps") {
