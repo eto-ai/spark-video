@@ -134,6 +134,7 @@ case class VideoPartitionReaderFactory(
     val frameId = firstFrameId(file, frameStep) + offset
     grabber.setVideoFrameNumber(frameId.toInt)
     var frame = grabber.grabImage()
+    logger.info(s"fps ${options.fps} step ${frameStep}, offset ${offset}")
     logger.info(s"Building iterator using first frame_id: ${frameId}")
 
     new Iterator[InternalRow] {
@@ -168,6 +169,7 @@ case class VideoPartitionReaderFactory(
 
     val frameId = firstFrameId(file, frameStep) + offset
     grabber.setVideoFrameNumber(frameId.toInt)
+    logger.info(s"fps ${options.fps} step ${frameStep}, offset ${offset}")
     logger.info(s"Building reader using first frame_id: ${frameId}")
 
     var frame: Frame = null

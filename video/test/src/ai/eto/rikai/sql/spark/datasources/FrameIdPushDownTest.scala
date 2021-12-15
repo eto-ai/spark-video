@@ -64,4 +64,28 @@ class FrameIdPushDownTest extends SparkSessionSuite {
     )
     assertRows(rows1, rows2, 4)
   }
+
+  test("frame_id push down with customized stepSize and stepOffset") {
+    val df = spark.read
+      .format("video")
+      .option("frameStepSize", 2)
+      .option("frameStepOffset", 1)
+      .load(localVideo)
+      .filter("frame_id > 10 and frame_id <= 16")
+    assert(df.count() === 3)
+
+    spark.sql(s"""
+        |create or replace temporary view test_view
+        |using video
+        |options (
+        |  path "$localVideo",
+        |  frameStepSize 2
+        |)
+        |""".stripMargin)
+
+    val df2 = spark.sql("""
+          |select * from test_view where frame_id > 10 and frame_id <= 16
+          |""".stripMargin)
+    assert(df2.count() == 3)
+  }
 }
