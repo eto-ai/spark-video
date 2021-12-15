@@ -14,9 +14,9 @@ class VideoOptions(@transient val parameters: CaseInsensitiveMap[String])
   val fps = parameters.get("fps").map(_.toInt).getOrElse(0)
 
   /** stepSize and stepOffset are used to determine how frames are selected
-    * assuming the frame_ids are 1 2 3 4 5 6 7 8 9 10
+    * assuming the frame_ids are 0 1 2 3 4 5 6 7 8 9 10
     * with 3 as stepSize, 0 as stepOffset, here are the selected frames:
-    * 3 6 9
+    * 0 3 6 9
     * with 3 as stepSize, 1 as stepOffset, here are the selected frames:
     * 1 4 7 10
     * with 3 as stepSize, 2 as stepOffset, here are the selected frames:

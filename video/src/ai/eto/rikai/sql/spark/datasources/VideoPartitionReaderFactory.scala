@@ -131,11 +131,12 @@ case class VideoPartitionReaderFactory(
     val (frameStep, offset) = options.getFrameStep(grabber)
 
     // Grab the first frame
-    val frameId = firstFrameId(file, frameStep) + offset
+    val frameId = firstFrameId(file, frameStep)
     grabber.setVideoFrameNumber(frameId.toInt)
+    skipFrames(grabber, offset)
     var frame = grabber.grabImage()
     logger.info(s"fps ${options.fps} step ${frameStep}, offset ${offset}")
-    logger.info(s"Building iterator using first frame_id: ${frameId}")
+    logger.info(s"Building iterator using first frame_id: ${frameId + offset}")
 
     new Iterator[InternalRow] {
       override def hasNext: Boolean = {
@@ -167,17 +168,22 @@ case class VideoPartitionReaderFactory(
     val grabber = buildGrabber(options, file)
     val (frameStep, offset) = options.getFrameStep(grabber)
 
-    val frameId = firstFrameId(file, frameStep) + offset
+    val frameId = firstFrameId(file, frameStep)
     grabber.setVideoFrameNumber(frameId.toInt)
     logger.info(s"fps ${options.fps} step ${frameStep}, offset ${offset}")
-    logger.info(s"Building reader using first frame_id: ${frameId}")
+    logger.info(s"Building reader using first frame_id: ${frameId + offset}")
 
     var frame: Frame = null
 
     val videoReader = new PartitionReader[InternalRow] {
       override def next(): Boolean = {
-        frame = grabber.grabImage()
-        skipFrames(grabber, frameStep - 1)
+        if (frame == null) {
+          skipFrames(grabber, offset)
+          frame = grabber.grabImage()
+        } else {
+          skipFrames(grabber, frameStep - 1)
+          frame = grabber.grabImage()
+        }
         frame != null &&
         frameIdFilterV1.highest.forall(value =>
           grabber.getFrameNumber <= value
