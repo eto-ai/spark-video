@@ -16,6 +16,8 @@
 
 package ai.eto.rikai.sql.spark.datasources
 
+import com.typesafe.scalalogging.LazyLogging
+
 import java.net.URI
 import javax.imageio.ImageIO
 import org.apache.commons.codec.digest.DigestUtils
@@ -35,12 +37,7 @@ import org.apache.spark.sql.sources.Filter
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.unsafe.types.UTF8String
 import org.apache.spark.util.SerializableConfiguration
-import org.bytedeco.javacv.{
-  FFmpegFrameGrabber,
-  Frame,
-  FrameGrabber,
-  Java2DFrameConverter
-}
+import org.bytedeco.javacv.{FFmpegFrameGrabber, Frame, Java2DFrameConverter}
 
 case class VideoPartitionReaderFactory(
     sqlConf: SQLConf,
@@ -50,7 +47,9 @@ case class VideoPartitionReaderFactory(
     partitionSchema: StructType,
     options: VideoOptions,
     filters: Seq[Filter]
-) extends FilePartitionReaderFactory {
+) extends FilePartitionReaderFactory
+    with LazyLogging {
+  private val frameIdFilterV1 = FrameIdFilterV1(filters)
 
   private def resolveFilePath(file: PartitionedFile): String = {
     val uri = new URI(file.filePath)
@@ -78,7 +77,6 @@ case class VideoPartitionReaderFactory(
     grabber.setImageHeight(options.imageHeight)
     grabber.setImageScalingFlags(options.getImageScalingFlags())
     grabber.start()
-    grabber.setFrameNumber(file.start.toInt)
     grabber
   }
 
@@ -86,7 +84,7 @@ case class VideoPartitionReaderFactory(
       converter: Java2DFrameConverter,
       readDataSchema: StructType,
       uri: URI,
-      frameId: Long,
+      grabber: FFmpegFrameGrabber,
       frame: Frame
   ): InternalRow = {
     val size = readDataSchema.size
@@ -96,7 +94,7 @@ case class VideoPartitionReaderFactory(
         case VideoSchema.VIDEO_URI =>
           row.update(index, UTF8String.fromString(uri.toString))
         case VideoSchema.FRAME_ID =>
-          row.setLong(index, frameId)
+          row.setLong(index, grabber.getFrameNumber.toLong)
         case VideoSchema.TS =>
           row.update(index, frame.timestamp)
         case VideoSchema.IMAGE_DATA =>
@@ -109,11 +107,19 @@ case class VideoPartitionReaderFactory(
     row
   }
 
-  private def nextFrame(grabber: FFmpegFrameGrabber, frameStep: Long): Frame = {
-    (1L until frameStep).foreach { i =>
+  private def skipFrames(grabber: FFmpegFrameGrabber, skipStep: Long): Unit = {
+    (1L to skipStep).foreach { i =>
       grabber.grabImage()
     }
-    grabber.grabImage()
+  }
+
+  private def firstFrameId(file: PartitionedFile, frameStep: Long): Long = {
+    val frameId = file.start.max(frameIdFilterV1.lowest.getOrElse(0))
+    val shift = frameId % frameStep
+    if (shift == 0)
+      frameId
+    else
+      frameId - shift
   }
 
   def buildIterator(file: PartitionedFile): Iterator[InternalRow] = {
@@ -121,25 +127,31 @@ case class VideoPartitionReaderFactory(
     val uri = new URI(file.filePath)
     val grabber = buildGrabber(options, file)
     val (frameStep, offset) = options.getFrameStep(grabber)
-    var frame: Frame = null
-    var frameId = file.start - frameStep + offset
 
     // Grab the first frame
-    frameId = frameId + frameStep
-    frame = nextFrame(grabber, frameStep)
+    val frameId = firstFrameId(file, frameStep)
+    grabber.setVideoFrameNumber(frameId.toInt)
+    skipFrames(grabber, offset)
+    var frame = grabber.grabImage()
+    logger.info(s"fps ${options.fps} step ${frameStep}, offset ${offset}")
+    logger.info(s"Building iterator using first frame_id: ${frameId + offset}")
 
     new Iterator[InternalRow] {
       override def hasNext: Boolean = {
-        frame != null && (frameId < file.start + file.length)
+        frame != null &&
+        frameIdFilterV1.highest.forall(value =>
+          grabber.getFrameNumber <= value
+        ) &&
+        (grabber.getFrameNumber < file.start + file.length)
       }
 
       override def next(): InternalRow = {
         val currentRow =
-          buildRow(converter, readDataSchema, uri, frameId, frame)
+          buildRow(converter, readDataSchema, uri, grabber, frame)
 
         // Grab the next frame
-        frameId = frameId + frameStep
-        frame = nextFrame(grabber, frameStep)
+        skipFrames(grabber, frameStep - 1)
+        frame = grabber.grabImage()
 
         currentRow
       }
@@ -154,18 +166,31 @@ case class VideoPartitionReaderFactory(
     val grabber = buildGrabber(options, file)
     val (frameStep, offset) = options.getFrameStep(grabber)
 
+    val frameId = firstFrameId(file, frameStep)
+    grabber.setVideoFrameNumber(frameId.toInt)
+    logger.info(s"fps ${options.fps} step ${frameStep}, offset ${offset}")
+    logger.info(s"Building reader using first frame_id: ${frameId + offset}")
+
     var frame: Frame = null
-    var frameId = file.start - frameStep + offset
 
     val videoReader = new PartitionReader[InternalRow] {
       override def next(): Boolean = {
-        frameId = frameId + frameStep
-        frame = nextFrame(grabber, frameStep)
-        frame != null && (frameId < file.start + file.length)
+        if (frame == null) {
+          skipFrames(grabber, offset)
+          frame = grabber.grabImage()
+        } else {
+          skipFrames(grabber, frameStep - 1)
+          frame = grabber.grabImage()
+        }
+        frame != null &&
+        frameIdFilterV1.highest.forall(value =>
+          grabber.getFrameNumber <= value
+        ) &&
+        (grabber.getFrameNumber < file.start + file.length)
       }
 
       override def get(): InternalRow = {
-        buildRow(converter, readDataSchema, uri, frameId, frame)
+        buildRow(converter, readDataSchema, uri, grabber, frame)
       }
 
       override def close(): Unit = {

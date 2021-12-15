@@ -53,6 +53,8 @@ case class ToMLImage(child: Expression)
 
   override def prettyName: String = "ml_image"
 
+  /** no explicit override here to keep it working for Apache Spark < 3.2.0
+    */
   def withNewChildInternal(newChild: Expression): Expression =
     copy(child = newChild)
 }

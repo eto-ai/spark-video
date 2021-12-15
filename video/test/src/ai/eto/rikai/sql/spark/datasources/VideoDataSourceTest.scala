@@ -32,7 +32,7 @@ class VideoDataSourceTest extends SparkSessionSuite {
          |select * from video.`${localVideo}`
          |""".stripMargin)
     df.show(3)
-    assert(df.count() === 10)
+    assert(df.count() === 300)
   }
 
   test("option: fps") {
@@ -44,7 +44,7 @@ class VideoDataSourceTest extends SparkSessionSuite {
         .format("video")
         .option("fps", fps)
         .load(localVideo)
-        .where("date_format(ts, 'mm:ss') = '00:00'")
+        .where("date_format(ts, 'mm:ss') = '00:01'")
       df.select("frame_id").show()
       assert(df.count() === fps)
     }
@@ -66,7 +66,7 @@ class VideoDataSourceTest extends SparkSessionSuite {
           .format("video")
           .option("frameStepSize", 10)
           .load(localVideo)
-      } === Seq(10L, 20L, 30L)
+      } === Seq(0L, 10L, 20L)
     }
     assert {
       firstThreeFrameIds {

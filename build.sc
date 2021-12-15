@@ -6,8 +6,6 @@ import mill.modules.Assembly
 import mill.modules.Assembly.Rule.ExcludePattern
 import $ivy.`org.bytedeco:javacpp:1.5.6`
 
-import scala.util.Properties
-
 class VideoModule(majorVersion: String) extends CrossScalaModule with PublishModule with ScalafmtModule {
   override def crossScalaVersion: String = majorVersion match {
     case "2.12" => "2.12.13"
@@ -39,7 +37,8 @@ class VideoModule(majorVersion: String) extends CrossScalaModule with PublishMod
 
   override def ivyDeps = Agg(
     ivy"org.bytedeco:javacv:${javacppVersion}",
-    ivy"org.bytedeco:ffmpeg:4.4-${javacppVersion}"
+    ivy"org.bytedeco:ffmpeg:4.4-${javacppVersion}",
+    ivy"com.typesafe.scala-logging::scala-logging:3.9.4"
   )
 
   def assemblyRules = Assembly.defaultRules ++ Seq(ExcludePattern("scala/.*"))
