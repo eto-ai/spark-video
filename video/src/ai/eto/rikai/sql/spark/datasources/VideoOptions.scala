@@ -39,7 +39,9 @@ class VideoOptions(@transient val parameters: CaseInsensitiveMap[String])
 
   def getFrameStep(grabber: FrameGrabber): (Int, Int) = {
     if (fps <= 0) {
-      val startId = if (frameStepOffset == 0) frameStepSize else frameStepOffset
+      val startId =
+        if (frameStepOffset > frameStepSize) (frameStepOffset % frameStepSize)
+        else frameStepOffset
       (frameStepSize, startId)
     } else {
       val realFps = Math.floor {

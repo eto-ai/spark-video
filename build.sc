@@ -39,7 +39,8 @@ class VideoModule(majorVersion: String) extends CrossScalaModule with PublishMod
 
   override def ivyDeps = Agg(
     ivy"org.bytedeco:javacv:${javacppVersion}",
-    ivy"org.bytedeco:ffmpeg:4.4-${javacppVersion}"
+    ivy"org.bytedeco:ffmpeg:4.4-${javacppVersion}",
+    ivy"com.typesafe.scala-logging::scala-logging:3.9.4"
   )
 
   def assemblyRules = Assembly.defaultRules ++ Seq(ExcludePattern("scala/.*"))

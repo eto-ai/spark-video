@@ -36,6 +36,7 @@ case class VideoScan(
     readDataSchema: StructType,
     readPartitionSchema: StructType,
     options: CaseInsensitiveStringMap,
+    pushedFilters: Array[Filter],
     partitionFilters: Seq[Expression] = Seq.empty,
     dataFilters: Seq[Expression] = Seq.empty
 ) extends FileScan {
@@ -63,7 +64,7 @@ case class VideoScan(
       readDataSchema,
       readPartitionSchema,
       videoOptions,
-      Array.empty[Filter]
+      pushedFilters
     )
   }
 }
