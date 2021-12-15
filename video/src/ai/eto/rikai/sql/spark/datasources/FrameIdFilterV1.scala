@@ -26,7 +26,10 @@ import org.apache.spark.sql.sources.{
   LessThanOrEqual
 }
 
-/** Push down by frame_id using lowest and highest
+/** Push down by frame_id using the lowest and highest
+  * This is a very naive implementation. For example,
+  *     select * from video.`xyz.mp4` where frame_id > 10 and frame_id > 20
+  * It will only skip the first 10 frames.
   * @param lowest
   * @param highest
   */

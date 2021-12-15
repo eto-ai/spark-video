@@ -6,8 +6,6 @@ import mill.modules.Assembly
 import mill.modules.Assembly.Rule.ExcludePattern
 import $ivy.`org.bytedeco:javacpp:1.5.6`
 
-import scala.util.Properties
-
 class VideoModule(majorVersion: String) extends CrossScalaModule with PublishModule with ScalafmtModule {
   override def crossScalaVersion: String = majorVersion match {
     case "2.12" => "2.12.13"
