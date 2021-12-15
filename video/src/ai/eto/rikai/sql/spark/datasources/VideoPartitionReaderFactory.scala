@@ -58,9 +58,7 @@ case class VideoPartitionReaderFactory(
     uri.getScheme match {
       case "s3" =>
         val region = SQLConf.get.getConfString("spark.hadoop.aws.region")
-        val tmpFileName = String.valueOf(
-          DigestUtils.getMd5Digest.digest(file.toString().getBytes())
-        )
+        val tmpFileName = DigestUtils.md5Hex(file.toString())
         val s3Utils = new S3Utils(region)
         val fullName = s"/tmp/${tmpFileName}.${extension}"
         s3Utils.getObject(uri, fullName)
