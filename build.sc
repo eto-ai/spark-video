@@ -13,7 +13,7 @@ class VideoModule(majorVersion: String) extends CrossScalaModule with PublishMod
     case _ => ???
   }
 
-  override def publishVersion = "0.0.3-SNAPSHOT"
+  override def publishVersion = "0.0.3"
 
   override def artifactId = s"spark-video_${majorVersion}"
 
