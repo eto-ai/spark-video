@@ -24,7 +24,7 @@ import org.apache.spark.sql.rikai.expressions.ToMLImage
 class SparkVideoExtensions extends (SparkSessionExtensions => Unit) {
   override def apply(extensions: SparkSessionExtensions): Unit = {
     extensions.injectFunction(
-      new FunctionIdentifier("ml_image"),
+      new FunctionIdentifier("thumbnail"),
       new ExpressionInfo("ai.eto.rikai.sql.spark.expressions", "ToMLImage"),
       (exprs: Seq[Expression]) => ToMLImage(exprs.head)
     )
