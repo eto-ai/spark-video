@@ -82,7 +82,7 @@ class VideoDataSourceTest extends SparkSessionSuite {
   test("option: imageWidth, imageHeight") {
     def firstRow(df: DataFrame): Row = {
       import spark.implicits._
-      df.selectExpr("ml_image(image_data) as image")
+      df.selectExpr("thumbnail(image_data) as image")
         .withColumn("width", $"image.width")
         .withColumn("height", $"image.height")
         .head()

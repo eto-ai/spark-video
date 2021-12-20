@@ -51,7 +51,7 @@ case class ToMLImage(child: Expression)
 
   override def dataType: DataType = ImageSchema.columnSchema
 
-  override def prettyName: String = "ml_image"
+  override def prettyName: String = "thumbnail"
 
   /** no explicit override here to keep it working for Apache Spark < 3.2.0
     */

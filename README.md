@@ -15,6 +15,7 @@ sudo wget -O /databricks/jars/spark-video-assembly-0.0.3.jar https://github.com/
 ### Cheatsheet
 ```
 bin/mill 'video[2.12].test'
+bin/mill 'video[2.12].test.testOnly' '**.MLImageTest.scala'
 bin/mill 'video[2.12].publishLocal'
 bin/mill 'video[2.12].assembly'
 
