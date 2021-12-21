@@ -20,7 +20,7 @@ import ai.eto.rikai.sql.spark.datasources.SparkSessionSuite
 import org.apache.spark.ml.image.ImageSchema
 
 class MLImageTest extends SparkSessionSuite {
-  test("udf: ml_image") {
+  test("udf: thumbnail") {
     val df = spark.read
       .format("video")
       .option("fps", 5)
@@ -28,7 +28,7 @@ class MLImageTest extends SparkSessionSuite {
     df.createOrReplaceTempView("frames")
     assert(df.count() === 50)
     val showImage =
-      spark.sql("select ml_image(image_data) as image from frames limit 3")
+      spark.sql("select thumbnail(image_data) as image from frames limit 3")
     assert(showImage.schema("image").dataType === ImageSchema.columnSchema)
     showImage
       .selectExpr("image.origin", "image.height", "image.width")
