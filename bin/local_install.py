@@ -9,7 +9,7 @@ if platform.system() == 'Darwin':
 else:
     classifier = "linux-x86_64"
 
-version = "0.0.3"
+version = "0.0.4"
 
 ffmpeg = f"https://repo1.maven.org/maven2/org/bytedeco/ffmpeg/4.4-1.5.6/ffmpeg-4.4-1.5.6-{classifier}.jar"
 javacpp = f"https://repo1.maven.org/maven2/org/bytedeco/javacpp/1.5.6/javacpp-1.5.6-{classifier}.jar"
