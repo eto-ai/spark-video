@@ -18,11 +18,11 @@ class VideoModule(majorVersion: String) extends CrossScalaModule with PublishMod
   override def artifactId = s"spark-video_${majorVersion}"
 
   override def pomSettings = PomSettings(
-    description = "My first library",
+    description = "Processing Videos on Apache Spark",
     organization = "eto.ai.rikai",
-    url = "https://github.com/darcy-shen/spark-video",
+    url = "https://github.com/eto-ai/spark-video",
     licenses = Seq(License.MIT),
-    versionControl = VersionControl.github("darcy-shen", "spark-video"),
+    versionControl = VersionControl.github("eto-ai", "spark-video"),
     developers = Seq(
       Developer("darcy-shen", "Darcy Shen", "https://github.com/darcy-shen")
     )
