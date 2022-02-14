@@ -3,6 +3,9 @@
 ### Local Development
 Just copy and paste the python code from [bin/local_install.py](bin/local_install.py) to the pyspark REPL.
 
+### Google Colab
+See [notebooks/GoogleColabDemo.ipynb](notebooks/GoogleColabDemo.ipynb)
+
 ### Production: Databricks Runtime
 Put these three lines in the init script:
 ```
